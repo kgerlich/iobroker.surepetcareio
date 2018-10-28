@@ -205,7 +205,7 @@ function get_household() {
 }
 
 function get_pets() {
-    if (!('token') in private)) {
+    if (!('token' in privates)) {
         console.info('no token in adapter');
     }
     var options = {
