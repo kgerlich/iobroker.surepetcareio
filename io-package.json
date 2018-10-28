@@ -1,0 +1,71 @@
+{
+    "common": {
+        "name": "surepetcareio",
+        "version": "0.0.1",
+        "news": {
+            "0.0.1": {
+                "en": "initial adapter",
+                "de": "Initiale Version",
+                "ru": "Первоначальный адаптер",
+                "pt": "Versão inicial",
+                "fr": "Version initiale",
+                "nl": "Eerste release"
+            }
+        },
+		"title": "surepetcareio",
+        "titleLang": {
+            "en": "surepetcareio",
+            "de": "",
+            "ru": "",
+            "pt": "",
+            "nl": "",
+            "fr": "",
+            "it": "",
+            "es": ""
+        },
+        "desc": {
+            "en": "ioBroker surepetcareio",
+            "de": "ioBroker surepetcareio",
+            "ru": "ioBroker surepetcareio как образец",
+            "pt": "Modelo de adaptador para o ioBroker",
+            "fr": "ioBroker adaptateur modèle",
+            "nl": "ioBroker surepetcareio",
+            "it": "Adattatore modello ioBroker",
+            "es": "Adaptador de plantilla ioBroker"
+        },
+        "authors": [
+            "Klaus Gerlicher <klaus@klausgerlicher.de>"
+        ],
+        "docs": {
+            "en": "docs/en/admin.md",
+            "ru": "docs/ru/admin.md",
+            "de": "docs/de/admin.md",
+            "es": "docs/es/admin.md",
+            "it": "docs/it/admin.md",
+            "fr": "docs/fr/admin.md",
+            "nl": "docs/nl/admin.md",
+            "pt": "docs/pt/admin.md"
+        },
+        "platform": "Javascript/Node.js",
+        "mode": "daemon",
+        "icon": "surepetcareio.png",
+        "materialize": true,
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.surepetcareio/master/admin/surepetcareio.png",
+        "keywords": ["surepetcareio", "cat", "door"],
+        "readme": "https://github.com/ioBroker/ioBroker.surepetcareio/blob/master/README.md",
+        "loglevel": "info",
+        "type": "general",
+        "license": "MIT",
+        "messagebox": false,
+        "restartAdapters": ["vis"]
+    },
+    "native": {
+        "username": "klaus@klausgerlicher.de",
+        "password": "******",
+        "device_id": "1234567890"
+    },
+    "objects": [
+
+    ]
+}
