@@ -110,7 +110,7 @@ function main() {
         },
         native: {}
     });
-    adapter.setState('connected', false);
+    adapter.setState('connected', {val: false, ack: true});
 
     login(adapter.config.username, adapter.config.password, adapter.config.device_id);
 }
@@ -193,7 +193,7 @@ function get_household() {
             console.log(util.inspect(obj, false, null, true /* enable colors */));
 
             privates['household'] = obj.data[0]['id'];
-            adapter.setState('connected', true);
+            adapter.setState('connected', {val: true, ack: true});
 
             setTimeout(timeout_callback, 10*1000);
         });
@@ -246,8 +246,7 @@ function get_pets() {
                     native: {}
                 });
                 var where = obj.data[i].position.where;
-                adapter.setState('pets.' + name, (where == 1) ? true : false);
-                //Do something
+                adapter.setState('pets.' + name, {val: (where == 1) ? true : false, ack: true});
             }
         });
     });
