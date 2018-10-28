@@ -51,7 +51,7 @@
         "icon": "surepetcareio.png",
         "materialize": true,
         "enabled": true,
-        "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.surepetcareio/master/admin/surepetcareio.png",
+        "extIcon": "https://raw.githubusercontent.com/kgerlich/ioBroker.surepetcareio/master/admin/surepetcareio.png",
         "keywords": ["surepetcareio", "cat", "door"],
         "readme": "https://github.com/ioBroker/ioBroker.surepetcareio/blob/master/README.md",
         "loglevel": "info",
