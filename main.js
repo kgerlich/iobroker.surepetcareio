@@ -54,36 +54,6 @@ adapter.on('unload', function (callback) {
     }
 });
 
-// is called if a subscribed object changes
-adapter.on('objectChange', function (id, obj) {
-    // Warning, obj can be null if it was deleted
-    adapter.log.info('objectChange ' + id + ' ' + JSON.stringify(obj));
-});
-
-// is called if a subscribed state changes
-adapter.on('stateChange', function (id, state) {
-    // Warning, state can be null if it was deleted
-    adapter.log.info('stateChange ' + id + ' ' + JSON.stringify(state));
-
-    // you can use the ack flag to detect if it is status (true) or command (false)
-    if (state && !state.ack) {
-        adapter.log.info('ack is not set!');
-    }
-});
-
-// Some message was sent to adapter instance over message box. Used by email, pushover, text2speech, ...
-adapter.on('message', function (obj) {
-    if (typeof obj === 'object' && obj.message) {
-        if (obj.command === 'send') {
-            // e.g. send email or pushover or whatever
-            console.log('send command');
-
-            // Send response in callback if required
-            if (obj.callback) adapter.sendTo(obj.from, obj.command, 'Message received', obj.callback);
-        }
-    }
-});
-
 // is called when databases are connected and adapter received configuration.
 // start here!
 adapter.on('ready', function () {
@@ -110,7 +80,7 @@ function main() {
         },
         native: {}
     });
-    adapter.setState('connected', {val: false, ack: true});
+    adapter.setState('connected', false, true);
 
     login(adapter.config.username, adapter.config.password, adapter.config.device_id);
 }
@@ -144,12 +114,12 @@ function login(username, password, device_id) {
   };
 
   var req = https.request(options, (res) => {
-    console.log('statusCode:', res.statusCode);
-    console.log('headers:', res.headers);
+    adapter.log.debug('login statusCode:', res.statusCode);
+    adapter.log.debug('login headers:', res.headers);
 
     res.on('data', (d) => {
       var obj = JSON.parse(d);
-      console.log(util.inspect(obj, false, null, true /* enable colors */));
+      adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
 
       var token = obj.data['token'];
       privates['token'] = token;
@@ -182,15 +152,15 @@ function get_household() {
     };
 
     var req = https.request(options, (res) => {
-        console.log('statusCode:', res.statusCode);
-        console.log('headers:', res.headers);
+        adapter.log.debug('get_household statusCode:', res.statusCode);
+        adapter.log.debug('get_household headers:', res.headers);
 
         res.on('data', (d) => {
             var obj = JSON.parse(d);
-            console.log(util.inspect(obj, false, null, true /* enable colors */));
+            adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
 
             privates['household'] = obj.data[0]['id'];
-            adapter.setState('connected', {val: true, ack: true});
+            adapter.setState('connected',true, true);
 
             setTimeout(timeout_callback, 10*1000);
         });
@@ -224,17 +194,18 @@ function get_pets() {
     };
 
     var req = https.request(options, (res) => {
-        console.log('statusCode:', res.statusCode);
-        console.log('headers:', res.headers);
+        adapter.log.debug('get_pets statusCode:', res.statusCode);
+        adapter.log.debug('get_pets headers:', res.headers);
 
         res.on('data', (d) => {
             var obj = JSON.parse(d);
-            console.log(util.inspect(obj, false, null, true /* enable colors */));
+            adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
 
             var len = obj.data.length;
             for (var i = 0; i < len; i++) {
                 var name = obj.data[i].name;
-                console.log(name);
+                var where = obj.data[i].position.where;
+                adapter.log.info(name + ' is ' + where);
 
                 adapter.setObject('pets.' + name, {
                     type: 'state',
@@ -245,8 +216,8 @@ function get_pets() {
                     },
                     native: {}
                 });
-                var where = obj.data[i].position.where;
-                adapter.setState('pets.' + name, {val: (where == 1) ? true : false, ack: true});
+
+                adapter.setState('pets.' + name, (where == 1) ? true : false, true);
             }
         });
     });
