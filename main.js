@@ -115,13 +115,10 @@ function main() {
     login(adapter.config.username, adapter.config.password, adapter.config.device_id);
 }
 
-var counter = 0;
 var privates = {};
 
 function timeout_callback()
 {
-    console.log('counter = ' + counter++);
-
     get_pets();
 
     setTimeout(timeout_callback, 10*1000);
@@ -208,6 +205,9 @@ function get_household() {
 }
 
 function get_pets() {
+    if (!('token') in private)) {
+        console.info('no token in adapter');
+    }
     var options = {
         hostname: 'app.api.surehub.io',
         port: 443,
