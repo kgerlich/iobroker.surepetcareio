@@ -160,9 +160,9 @@ function get_household() {
             adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
 
             privates['household'] = obj.data[0]['id'];
-            adapter.setState('connected',true, true);
-
-            setTimeout(timeout_callback, 10*1000);
+            adapter.setState('connected',true, true, function(err) {
+                setTimeout(timeout_callback, 10*1000);
+            });
         });
     });
 
