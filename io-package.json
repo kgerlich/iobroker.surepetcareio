@@ -33,7 +33,7 @@
         "keywords": ["surepetcareio", "pet", "door"],
         "readme": "https://github.com/ioBroker/ioBroker.surepetcareio/blob/master/README.md",
         "loglevel": "info",
-        "type": "general",
+        "type": "hardware",
         "license": "MIT",
         "messagebox": false
     },
