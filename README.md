@@ -13,7 +13,7 @@ The adapter creates one data-point under its instance for each pet. Name and pre
 
 Sample usage in Javascript adapter (send mail if cat enters/exits through door, requires email adapter):
 
-<SNIP>
+<pre>
 function sendNotificationMail(subject, body="")
 {
     var d = new Date();
@@ -40,7 +40,7 @@ function catChanged(obj)
 
 // Katze raus/rein
 on(/^surepetcareio\.0\.household.*\..*$/, catChanged);
-</SNIP>
+</pre>
 
 
 
