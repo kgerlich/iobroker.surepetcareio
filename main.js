@@ -83,7 +83,7 @@ function main() {
     });
     adapter.setState('connected', false, true);
 
-    login(adapter.config.username, adapter.config.password, adapter.config.device_id, get_household);
+    do_login();
 }
 
 var privates = {};
@@ -117,6 +117,11 @@ function build_options(path, method, token) {
     return options;
 }
 
+function do_login() {
+    console.info('trying to login...');
+    login(adapter.config.username, adapter.config.password, adapter.config.device_id, get_household);
+}
+
 function login(username, password, device_id, callback) {
   var postData = JSON.stringify(
   { 'email_address':username,'password':password,'device_id':device_id}
@@ -125,17 +130,22 @@ function login(username, password, device_id, callback) {
   var options = build_options('/api/auth/login', 'POST');
 
   var req = https.request(options, (res) => {
-      adapter.log.debug('login statusCode: ' + res.statusMessage + '(' +  res.statusCode + ')');
-      adapter.log.debug('login headers:' + util.inspect(res.headers, false, null, true /* enable colors */));
+    adapter.log.debug('login statusCode: ' + res.statusMessage + '(' +  res.statusCode + ')');
+    adapter.log.debug('login headers:' + util.inspect(res.headers, false, null, true /* enable colors */));
 
-      res.on('data', (d) => {
+    res.on('data', (d) => {
         var obj = JSON.parse(d);
         adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
 
-        var token = obj.data['token'];
-        privates['token'] = token;
-        callback();
-      });
+        if (!('token' in obj.data)) {
+          console.info('no token in adapter, retrying login in 5 secs...');
+          setTimeout(do_login, 5*1000);
+        } else {
+            var token = obj.data['token'];
+            privates['token'] = token;
+            callback();
+        }
+    });
   });
 
   req.on('error', (e) => {
