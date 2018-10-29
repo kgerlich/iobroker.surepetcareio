@@ -57,7 +57,7 @@
         "loglevel": "info",
         "type": "general",
         "license": "MIT",
-        "messagebox": false,
+        "messagebox": false
     },
     "native": {
         "username": "xxx@yyy.com",
