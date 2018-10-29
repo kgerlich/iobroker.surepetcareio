@@ -12,9 +12,9 @@
                 "nl": "Eerste release"
             }
         },
-		"title": "surepetcareio",
+		"title": "Sure Petcare Flap Connect",
         "titleLang": {
-            "en": "surepetcareio",
+            "en": "Sure Petcare Flap Connect",
             "de": "",
             "ru": "",
             "pt": "",
@@ -52,16 +52,15 @@
         "materialize": true,
         "enabled": true,
         "extIcon": "https://raw.githubusercontent.com/kgerlich/ioBroker.surepetcareio/master/admin/surepetcareio.png",
-        "keywords": ["surepetcareio", "cat", "door"],
+        "keywords": ["surepetcareio", "pet", "door"],
         "readme": "https://github.com/ioBroker/ioBroker.surepetcareio/blob/master/README.md",
         "loglevel": "info",
         "type": "general",
         "license": "MIT",
         "messagebox": false,
-        "restartAdapters": ["vis"]
     },
     "native": {
-        "username": "klaus@klausgerlicher.de",
+        "username": "xxx@yyy.com",
         "password": "******",
         "device_id": "1234567890"
     },
