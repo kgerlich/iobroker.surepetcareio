@@ -89,9 +89,10 @@ var privates = {};
 
 function timeout_callback()
 {
-    get_pets(function() {
-        setTimeout(timeout_callback, 10*1000);
-    });
+    get_control(function() {
+        get_pets(function() {
+            setTimeout(timeout_callback, 10*1000);
+        }) });
 }
 
 function build_options(path, method, token) {
@@ -123,7 +124,7 @@ function do_login() {
 
 function login(username, password, callback) {
   var postData = JSON.stringify(
-  { 'email_address':username,'password':password, 'device_id':'0'}
+  { 'email_address':username,'password':password, 'device_id':'1050547954'}
   );
 
   var options = build_options('/api/auth/login', 'POST');
@@ -156,7 +157,7 @@ function login(username, password, callback) {
 }
 
 function get_household() {
-    var options = build_options('/api/household?with[]=household&with[]=pet&with[]=users&with[]=timez', 'GET', privates['token']);
+    var options = build_options('/api/household?with[]=household', 'GET', privates['token']);
 
     var req = https.request(options, (res) => {
         adapter.log.debug('get_household statusCode: ' + res.statusMessage + '(' +  res.statusCode + ')');
@@ -186,7 +187,7 @@ function get_pets(callback) {
     if (!('token' in privates)) {
         console.info('no token in adapter');
     }
-    var options = build_options('/api/household/' + privates['household'] + '/pet?with[]=photo&with[]=tag&with[]=position', 'GET', privates['token']);
+    var options = build_options('/api/household/' + privates['household'] + '/pet?with[]=position', 'GET', privates['token']);
 
     var req = https.request(options, (res) => {
         adapter.log.debug('get_pets statusCode: ' + res.statusMessage + '(' +  res.statusCode + ')');
@@ -215,6 +216,34 @@ function get_pets(callback) {
 
                 adapter.setState('pets.' + name, (where == 1) ? true : false, true);
             }
+            callback();
+        });
+    });
+
+    req.on('error', (e) => {
+        console.error(e);
+    });
+
+    req.write('');
+    req.end();
+}
+
+function get_control(callback) {
+    if (!('token' in privates)) {
+        console.info('no token in adapter');
+    }
+    var options = build_options('/api/me/start', 'GET', privates['token']);
+
+    var req = https.request(options, (res) => {
+        adapter.log.debug('get_pets statusCode: ' + res.statusMessage + '(' +  res.statusCode + ')');
+        adapter.log.debug('get_pets headers:' + util.inspect(res.headers, false, null, true /* enable colors */));
+
+        res.on('data', (d) => {
+            var obj = JSON.parse(d);
+            adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
+            privates.devices = obj.data.devices;
+            privates.households = obj.data.households;
+            privates.pets = obj.data.pets;
             callback();
         });
     });

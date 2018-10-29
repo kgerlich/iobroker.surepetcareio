@@ -22,11 +22,68 @@
  </style>
 <!-- you have to define 2 functions in the global scope: -->
 <script type="text/javascript">
+    function start(token, callback) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', "https://app.api.surehub.io/api/me/start", true);
+        xhr.setRequestHeader("Accept", "application/json, text/plain, */*");
+        xhr.setRequestHeader("Content-Type", "application/json;charset=utf-8");
+        xhr.setRequestHeader("Authorization", "Bearer " + token);
+        
+        xhr.onreadystatechange = function () {
+            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+                  console.log(this.responseText);
+                  var obj = JSON.parse(this.responseText);
+                  callback(obj);
+            }
+        };
+        xhr.send('');
+    }
+
+    function login(settings, callback) {
+        var postData = JSON.stringify(
+            { 'email_address':settings.username,'password':settings.password, 'device_id':'0'}
+        );
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', "https://app.api.surehub.io/api/auth/login", true);
+        xhr.setRequestHeader("Accept", "application/json, text/plain, */*");
+        xhr.setRequestHeader("Content-Type", "application/json;charset=utf-8");
+        
+        xhr.onreadystatechange = function () {
+            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+                  console.log(this.responseText);
+                  var obj = JSON.parse(this.responseText);
+                  if ('token' in obj.data) {
+                    console.log(obj.data.token);
+                    start(obj.data.token, callback);
+                  }
+            }
+        };
+        xhr.send(postData);
+    }
 
     // the function loadSettings has to exist ...
     function load(settings, onChange) {
         // example: select elements with id=key and class=value and insert value
-       if (!settings) return;
+        if (!settings) return;
+
+        login(settings, function (data) {
+            console.log(data);
+            var content = "<table>"
+            for (i=0 ; i < data.data.households.length; i++) {
+                content += '<tr><td>' + 'household ' +  i + '</td><td>' + data.data.households[i].name +'</td><td>' + data.data.households[i].id + '</td></tr>';
+            }
+            content += "</table>"
+            $('#households').append(content);
+
+            var content = "<table>"
+            for (i=0 ; i < data.data.pets.length; i++) {
+                content += '<tr><td>' + +  i + '</td><td>' + data.data.pets[i].name +'</td></tr>';
+            }
+            content += "</table>"
+            $('#pets').append(content);
+        });
+
         $('.value').each(function () {            
             var $key = $(this);
             var id = $key.attr('id');
@@ -62,6 +119,7 @@
             }
         });
         callback(obj);
+        window.location.reload();
     }
 </script>
 </head>
@@ -81,6 +139,11 @@
                     <tr><td class="translate">Username</td><td><input class="value" id="username"/></td></tr>
                     <tr><td class="translate">Password</td><td><input class="value" type="password" id="password"/></td></tr>
                 </table>
+            </div>
+            <br><br>
+            <div class="row" id="households">
+            </div>
+            <div class="row" id="pets">
             </div>
         </div>
     </div>
