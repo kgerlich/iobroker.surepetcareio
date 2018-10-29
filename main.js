@@ -43,6 +43,7 @@ const adapter = new utils.Adapter('surepetcareio');
 
 const https = require('https');
 const util = require('util')
+const prettyMs = require('pretty-ms');
 
 // is called when adapter shuts down - callback has to be called under any circumstances!
 adapter.on('unload', function (callback) {
@@ -82,49 +83,59 @@ function main() {
     });
     adapter.setState('connected', false, true);
 
-    login(adapter.config.username, adapter.config.password, adapter.config.device_id);
+    login(adapter.config.username, adapter.config.password, adapter.config.device_id, get_household);
 }
 
 var privates = {};
 
 function timeout_callback()
 {
-    get_pets();
-
-    setTimeout(timeout_callback, 10*1000);
+    get_pets(function() {
+        setTimeout(timeout_callback, 10*1000);
+    });
 }
 
-function login(username, password, device_id) {
+function build_options(path, method, token) {
+    var options = {
+        hostname: 'app.api.surehub.io',
+        port: 443,
+        path: path,
+        method: method,
+        headers: {
+            "Host" : "app.api.surehub.io",
+            "Accept" : "application/json, text/plain, */*",
+            "Referer" : "https://surepetcare.io/",
+            "Content-Type" : "application/json;charset=utf-8",
+            "Origin" :  "https://surepetcare.io",
+        }
+    };
+
+    if (token != undefined) {
+        options.headers["Authorization"] = 'Bearer ' + token;
+    }
+
+    return options;
+}
+
+function login(username, password, device_id, callback) {
   var postData = JSON.stringify(
   { 'email_address':username,'password':password,'device_id':device_id}
   );
 
-  var options = {
-    hostname: 'app.api.surehub.io',
-    port: 443,
-    path: '/api/auth/login',
-    method: 'POST',
-    headers: {
-          "Host" : "app.api.surehub.io",
-          "Accept" : "application/json, text/plain, */*",
-          "Referer" : "https://surepetcare.io/",
-          "Content-Type" : "application/json;charset=utf-8",
-          "Origin" :  "https://surepetcare.io",
-      }
-  };
+  var options = build_options('/api/auth/login', 'POST');
 
   var req = https.request(options, (res) => {
-    adapter.log.debug('login statusCode:', res.statusCode);
-    adapter.log.debug('login headers:', res.headers);
+      adapter.log.debug('login statusCode: ' + res.statusMessage + '(' +  res.statusCode + ')');
+      adapter.log.debug('login headers:' + util.inspect(res.headers, false, null, true /* enable colors */));
 
-    res.on('data', (d) => {
-      var obj = JSON.parse(d);
-      adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
+      res.on('data', (d) => {
+        var obj = JSON.parse(d);
+        adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
 
-      var token = obj.data['token'];
-      privates['token'] = token;
-      get_household();
-    });
+        var token = obj.data['token'];
+        privates['token'] = token;
+        callback();
+      });
   });
 
   req.on('error', (e) => {
@@ -136,24 +147,11 @@ function login(username, password, device_id) {
 }
 
 function get_household() {
-    var options = {
-        hostname: 'app.api.surehub.io',
-        port: 443,
-        path: '/api/household?with[]=household&with[]=pet&with[]=users&with[]=timez',
-        method: 'GET',
-        headers: {
-            "Host" : "app.api.surehub.io",
-            "Accept" : "application/json, text/plain, */*",
-            "Referer" : "https://surepetcare.io/",
-            "Content-Type" : "application/json;charset=utf-8",
-            "Origin" :  "https://surepetcare.io",
-            "Authorization" : 'Bearer ' + privates['token']
-        }
-    };
+    var options = build_options('/api/household?with[]=household&with[]=pet&with[]=users&with[]=timez', 'GET', privates['token']);
 
     var req = https.request(options, (res) => {
-        adapter.log.debug('get_household statusCode:', res.statusCode);
-        adapter.log.debug('get_household headers:', res.headers);
+        adapter.log.debug('get_household statusCode: ' + res.statusMessage + '(' +  res.statusCode + ')');
+        adapter.log.debug('get_household headers:' + util.inspect(res.headers, false, null, true /* enable colors */));
 
         res.on('data', (d) => {
             var obj = JSON.parse(d);
@@ -161,7 +159,7 @@ function get_household() {
 
             privates['household'] = obj.data[0]['id'];
             adapter.setState('connected',true, true, function(err) {
-                setTimeout(timeout_callback, 10*1000);
+                setTimeout(timeout_callback, 100);
             });
         });
     });
@@ -174,28 +172,15 @@ function get_household() {
     req.end();
 }
 
-function get_pets() {
+function get_pets(callback) {
     if (!('token' in privates)) {
         console.info('no token in adapter');
     }
-    var options = {
-        hostname: 'app.api.surehub.io',
-        port: 443,
-        path: '/api/household/' + privates['household'] + '/pet?with[]=photo&with[]=tag&with[]=position',
-        method: 'GET',
-        headers: {
-            "Host" : "app.api.surehub.io",
-            "Accept" : "application/json, text/plain, */*",
-            "Referer" : "https://surepetcare.io/",
-            "Content-Type" : "application/json;charset=utf-8",
-            "Origin" :  "https://surepetcare.io",
-            "Authorization" : 'Bearer ' + privates['token']
-        }
-    };
+    var options = build_options('/api/household/' + privates['household'] + '/pet?with[]=photo&with[]=tag&with[]=position', 'GET', privates['token']);
 
     var req = https.request(options, (res) => {
-        adapter.log.debug('get_pets statusCode:', res.statusCode);
-        adapter.log.debug('get_pets headers:', res.headers);
+        adapter.log.debug('get_pets statusCode: ' + res.statusMessage + '(' +  res.statusCode + ')');
+        adapter.log.debug('get_pets headers:' + util.inspect(res.headers, false, null, true /* enable colors */));
 
         res.on('data', (d) => {
             var obj = JSON.parse(d);
@@ -206,7 +191,7 @@ function get_pets() {
                 var name = obj.data[i].name;
                 var where = obj.data[i].position.where;
                 var since = obj.data[i].position.since
-                adapter.log.info(name + ' is ' + where + ' since ' + since);
+                adapter.log.info(name + ' is ' + where + ' since ' + prettyMs(Date.now() - new Date(since)));
 
                 adapter.setObject('pets.' + name, {
                     type: 'state',
@@ -220,6 +205,7 @@ function get_pets() {
 
                 adapter.setState('pets.' + name, (where == 1) ? true : false, true);
             }
+            callback();
         });
     });
 
