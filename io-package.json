@@ -5,46 +5,24 @@
         "news": {
             "0.0.1": {
                 "en": "initial adapter",
-                "de": "Initiale Version",
-                "ru": "Первоначальный адаптер",
-                "pt": "Versão inicial",
-                "fr": "Version initiale",
-                "nl": "Eerste release"
+                "de": "Initiale Version"
             }
         },
 		"title": "Sure Petcare Flap Connect",
         "titleLang": {
             "en": "Sure Petcare Flap Connect",
-            "de": "",
-            "ru": "",
-            "pt": "",
-            "nl": "",
-            "fr": "",
-            "it": "",
-            "es": ""
+            "de": "Sure Petcare Flap Connect"
         },
         "desc": {
-            "en": "ioBroker surepetcareio",
-            "de": "ioBroker surepetcareio",
-            "ru": "ioBroker surepetcareio как образец",
-            "pt": "Modelo de adaptador para o ioBroker",
-            "fr": "ioBroker adaptateur modèle",
-            "nl": "ioBroker surepetcareio",
-            "it": "Adattatore modello ioBroker",
-            "es": "Adaptador de plantilla ioBroker"
+            "en": "Adapter for Sureflap Pet Door Connect",
+            "de": "Adapter für Sureflap Haustierklappe mit App-Steuerung"
         },
         "authors": [
             "Klaus Gerlicher <klaus@klausgerlicher.de>"
         ],
         "docs": {
             "en": "docs/en/admin.md",
-            "ru": "docs/ru/admin.md",
-            "de": "docs/de/admin.md",
-            "es": "docs/es/admin.md",
-            "it": "docs/it/admin.md",
-            "fr": "docs/fr/admin.md",
-            "nl": "docs/nl/admin.md",
-            "pt": "docs/pt/admin.md"
+            "de": "docs/de/admin.md"
         },
         "platform": "Javascript/Node.js",
         "mode": "daemon",
@@ -61,10 +39,7 @@
     },
     "native": {
         "username": "xxx@yyy.com",
-        "password": "******",
-        "device_id": "1234567890"
+        "password": "******"
     },
-    "objects": [
-
-    ]
+    "objects": []
 }
