@@ -41,5 +41,17 @@
         "username": "xxx@yyy.com",
         "password": "******"
     },
-    "objects": []
+    "objects": [
+        {
+            "_id": "connected",
+            "type": "state",
+            "common": {
+                "name": "Info about connection to surepetcare.io API",
+                "type": "boolean",
+                "read":  true,
+                "write": false,
+				"role":  "text"
+            }
+        }
+    ]
 }

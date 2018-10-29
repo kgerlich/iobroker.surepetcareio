@@ -71,7 +71,7 @@
             console.log(data);
             var content = "<table>"
             for (i=0 ; i < data.data.households.length; i++) {
-                content += '<tr><td>' + 'household ' +  i + '</td><td>' + data.data.households[i].name +'</td><td>' + data.data.households[i].id + '</td></tr>';
+                content += '<tr><td>' + 'household ' +  data.data.households[i].id + '</td><td>' + data.data.households[i].name +'</td></tr>';
             }
             content += "</table>"
             $('#households').append(content);

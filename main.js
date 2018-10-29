@@ -49,6 +49,7 @@ const prettyMs = require('pretty-ms');
 adapter.on('unload', function (callback) {
     try {
         adapter.log.info('cleaned everything up...');
+        adapter.setState('connected', false, true);
         callback();
     } catch (e) {
         callback();
@@ -70,16 +71,6 @@ function main() {
 
     // in this surepetcareio all states changes inside the adapters namespace are subscribed
     adapter.subscribeStates('*');
-
-    adapter.setObject('connected', {
-        type: 'state',
-        common: {
-            name: 'connected',
-            type: 'boolean',
-            role: 'indicator'
-        },
-        native: {}
-    });
     adapter.setState('connected', false, true);
 
     do_login();
