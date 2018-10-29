@@ -67,7 +67,6 @@ function main() {
     // adapter.config:
     adapter.log.info('config username: '    + adapter.config.username);
     adapter.log.info('config password: '    + adapter.config.password);
-    adapter.log.info('config device_id: ' + adapter.config.device_id);
 
     // in this surepetcareio all states changes inside the adapters namespace are subscribed
     adapter.subscribeStates('*');
@@ -119,12 +118,12 @@ function build_options(path, method, token) {
 
 function do_login() {
     console.info('trying to login...');
-    login(adapter.config.username, adapter.config.password, adapter.config.device_id, get_household);
+    login(adapter.config.username, adapter.config.password, get_household);
 }
 
-function login(username, password, device_id, callback) {
+function login(username, password, callback) {
   var postData = JSON.stringify(
-  { 'email_address':username,'password':password,'device_id':device_id}
+  { 'email_address':username,'password':password, 'device_id':'0'}
   );
 
   var options = build_options('/api/auth/login', 'POST');
@@ -138,8 +137,8 @@ function login(username, password, device_id, callback) {
         adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
 
         if (obj == undefined || obj.data == undefined || !('token' in obj.data)) {
-          console.info('no token in adapter, retrying login in 5 secs...');
-          setTimeout(do_login, 5*1000);
+            adapter.log.info('no token in adapter, retrying login in 5 secs...');
+            setTimeout(do_login, 5*1000);
         } else {
             var token = obj.data['token'];
             privates['token'] = token;
@@ -169,6 +168,7 @@ function get_household() {
 
             privates['household'] = obj.data[0]['id'];
             adapter.setState('connected',true, true, function(err) {
+                adapter.log.info('connected...');
                 setTimeout(timeout_callback, 100);
             });
         });
