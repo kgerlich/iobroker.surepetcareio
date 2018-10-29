@@ -205,7 +205,8 @@ function get_pets() {
             for (var i = 0; i < len; i++) {
                 var name = obj.data[i].name;
                 var where = obj.data[i].position.where;
-                adapter.log.info(name + ' is ' + where);
+                var since = obj.data[i].position.since
+                adapter.log.info(name + ' is ' + where + ' since ' + since);
 
                 adapter.setObject('pets.' + name, {
                     type: 'state',
