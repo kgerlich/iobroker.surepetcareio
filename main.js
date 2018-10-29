@@ -137,7 +137,7 @@ function login(username, password, device_id, callback) {
         var obj = JSON.parse(d);
         adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
 
-        if (!('token' in obj.data)) {
+        if (obj != undefined || !('token' in obj.data)) {
           console.info('no token in adapter, retrying login in 5 secs...');
           setTimeout(do_login, 5*1000);
         } else {
