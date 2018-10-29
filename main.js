@@ -192,20 +192,21 @@ function get_pets(callback) {
             for (var i = 0; i < len; i++) {
                 var name = obj.data[i].name;
                 var where = obj.data[i].position.where;
-                var since = obj.data[i].position.since
+                var since = obj.data[i].position.since;
                 adapter.log.info(name + ' is ' + where + ' since ' + prettyMs(Date.now() - new Date(since)));
 
-                adapter.setObject('pets.' + name, {
+                var obj_name = 'household' + obj.data[i].household_id + '.' + name;
+                adapter.setObject(obj_name, {
                     type: 'state',
                     common: {
-                        name: 'pets.' + name,
+                        name: obj_name,
                         type: 'boolean',
                         role: 'indicator'
                     },
                     native: {}
                 });
 
-                adapter.setState('pets.' + name, (where == 1) ? true : false, true);
+                adapter.setState(obj_name, (where == 1) ? true : false, true);
             }
             callback();
         });

@@ -5,6 +5,9 @@
 <link rel="stylesheet" type="text/css" href="../../css/adapter.css"/>
 
 <script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+  integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+  crossorigin="anonymous"></script>
 <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
 
 <!-- these files always have to be included -->
@@ -40,6 +43,10 @@
     }
 
     function login(settings, callback) {
+
+        $( "#households" ).hide();
+        $( "#pets" ).hide();
+
         var postData = JSON.stringify(
             { 'email_address':settings.username,'password':settings.password, 'device_id':'0'}
         );
@@ -69,19 +76,24 @@
 
         login(settings, function (data) {
             console.log(data);
-            var content = "<table>"
+            var content = "<table class='bouncy'>"
             for (i=0 ; i < data.data.households.length; i++) {
-                content += '<tr><td>' + 'household ' +  data.data.households[i].id + '</td><td>' + data.data.households[i].name +'</td></tr>';
+                content += '<tr><td>' + 'household ' +  data.data.households[i].id + '</td><td>';
+                content += data.data.households[i].name;
+                content += "<table class='bouncy'>"
+                for (i=0 ; i < data.data.pets.length; i++) {
+                    content += '<tr><td>' + +  i + '</td><td>' + data.data.pets[i].name +'</td></tr>';
+                }
+                content += "</table>"
+                content +='</td></tr>';
             }
             content += "</table>"
             $('#households').append(content);
 
-            var content = "<table>"
-            for (i=0 ; i < data.data.pets.length; i++) {
-                content += '<tr><td>' + +  i + '</td><td>' + data.data.pets[i].name +'</td></tr>';
-            }
-            content += "</table>"
-            $('#pets').append(content);
+            $("table.bouncy tr:even").css("background-color", "#F4F4F8");
+            $("table.bouncy tr:odd").css("background-color", "#EFF1F1");
+
+            $( "#households" ).show( 'bounce', {}, 1000, function () {} );
         });
 
         $('.value').each(function () {            
