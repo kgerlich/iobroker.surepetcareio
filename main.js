@@ -108,78 +108,61 @@ function build_options(path, method, token) {
     return options;
 }
 
+function do_request(tag, options, postData, callback) {
+    var req = https.request(options, (res) => {
+        adapter.log.debug(tag +' statusCode: ' + res.statusMessage + '(' +  res.statusCode + ')');
+        adapter.log.debug(tag + 'headers:' + util.inspect(res.headers, false, null, true /* enable colors */));
+    
+        var data = [];
+        res.on('data', (chunk) => {
+            data.push(chunk);
+        });
+        res.on('data', () => {
+            var obj = JSON.parse(data.join(''));
+            adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
+
+            callback(obj);
+        });
+    });
+
+    req.on('error', (e) => {
+        adapter.log.error(e);
+    });
+
+    req.write(postData);
+    req.end();
+}
+
 function do_login() {
     console.info('trying to login...');
     login(adapter.config.username, adapter.config.password, get_household);
 }
 
 function login(username, password, callback) {
-  var postData = JSON.stringify(
-  { 'email_address':username,'password':password, 'device_id':'1050547954'}
-  );
-
+  var postData = JSON.stringify( { 'email_address':username,'password':password, 'device_id':'1050547954'} );
   var options = build_options('/api/auth/login', 'POST');
 
-  var req = https.request(options, (res) => {
-    adapter.log.debug('login statusCode: ' + res.statusMessage + '(' +  res.statusCode + ')');
-    adapter.log.debug('login headers:' + util.inspect(res.headers, false, null, true /* enable colors */));
-
-    var data = [];
-    res.on('data', (chunk) => {
-        data.push(chunk);
-    });
-    res.on('data', () => {
-        var obj = JSON.parse(data.join(''));
-        adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
-
-        if (obj == undefined || obj.data == undefined || !('token' in obj.data)) {
-            adapter.log.info('no token in adapter, retrying login in 5 secs...');
-            setTimeout(do_login, 5*1000);
-        } else {
-            var token = obj.data['token'];
-            privates['token'] = token;
-            callback();
-        }
-    });
-  });
-
-  req.on('error', (e) => {
-    console.error(e);
-  });
-
-  req.write(postData);
-  req.end();
+  do_request('login', options, postData, function(obj) {
+    if (obj == undefined || obj.data == undefined || !('token' in obj.data)) {
+        adapter.log.info('no token in adapter, retrying login in 5 secs...');
+        setTimeout(do_login, 5*1000);
+    } else {
+        var token = obj.data['token'];
+        privates['token'] = token;
+        callback();
+    }
+  })
 }
 
 function get_household() {
     var options = build_options('/api/household?with[]=household', 'GET', privates['token']);
-
-    var req = https.request(options, (res) => {
-        adapter.log.debug('get_household statusCode: ' + res.statusMessage + '(' +  res.statusCode + ')');
-        adapter.log.debug('get_household headers:' + util.inspect(res.headers, false, null, true /* enable colors */));
-
-        var data = [];
-        res.on('data', (chunk) => {
-            data.push(chunk);
-        });
-        res.on('end', () => {
-            var obj = JSON.parse(data.join(''));
-            adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
-
-            privates['household'] = obj.data[0]['id'];
-            adapter.setState('connected',true, true, function(err) {
-                adapter.log.info('connected...');
-                setTimeout(timeout_callback, 100);
-            });
+    do_request('get_household', options, '', function(obj) {
+        privates['household'] = obj.data[0]['id'];
+        adapter.setState('connected',true, true, function(err) {
+            adapter.log.info('connected...');
+            setTimeout(timeout_callback, 100);
         });
     });
-
-    req.on('error', (e) => {
-        console.error(e);
-    });
-
-    req.write('');
-    req.end();
 }
 
 function set_pets() {
@@ -190,13 +173,26 @@ function set_pets() {
         var since = privates.pets[i].position.since;
         adapter.log.info(name + ' is ' + where + ' since ' + prettyMs(Date.now() - new Date(since)));
 
-        var obj_name = 'household' + privates.pets[i].household_id + '.' + name;
+        var prefix = 'household' + privates.pets[i].household_id + '.pets';
+        adapter.setObject(prefix, {
+            type: 'channel',
+            common: {
+                name: 'Pets in household ' + privates.pets[i].household_id,
+                role: 'info'
+            },
+            native: {}
+        });
+
+        var obj_name = prefix + '.' + i;
         adapter.setObject(obj_name, {
             type: 'state',
             common: {
-                name: obj_name,
+                name: name,
                 type: 'boolean',
-                role: 'indicator'
+                role: 'indicator',
+                icon: 'surepetcareio.png',
+                read: true,
+                write: false
             },
             native: {}
         });
@@ -205,34 +201,107 @@ function set_pets() {
     }
 }
 
-function get_control(callback) {
-    if (!('token' in privates)) {
-        console.info('no token in adapter');
+function set_status() {
+    for(var h = 0; h < privates.households.length; h++) {
+        var prefix = 'household' + privates.households[h].id + '.devices';
+       
+        adapter.setObject(prefix, {
+            type: 'channel',
+            common: {
+                name: 'Devices in household ' + privates.households[h].id,
+                role: 'info'
+            },
+            native: {}
+        });
+       
+        for(var d = 0; d < privates.devices.length; d++) {
+            if (privates.devices[d].household_id ==  privates.households[h].id) {
+                var obj_name =  prefix + '.' + privates.devices[d].name;
+                adapter.setObject(obj_name, {
+                    type: 'channel',
+                    common: {
+                        name: privates.devices[d].name,
+                        role: ''
+                    },
+                    native: {}
+                });
+
+                if ('parent' in privates.devices[d]) {
+                    // locking status
+                    var obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'locking';
+                    adapter.setObject(obj_name, {
+                        type: 'state',
+                        common: {
+                            name: 'locking',
+                            role: 'indicator',
+                            type: 'number',
+                            read: true,
+                            write: false,
+                            states: {0: 'OPEN', 1:'LOCKED INSIDE', 2:'LOCKED OUTSIDE', 3:'LOCKED BOTH', 4:'CURFEW' }
+                        },
+                        native: {}
+                    });
+                    adapter.setState(obj_name, privates.devices[d].status.locking.mode, true);
+
+                    // battery status
+                    obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'battery';
+                    adapter.setObject(obj_name, {
+                        type: 'state',
+                        common: {
+                            name: 'battery',
+                            role: 'indicator',
+                            type: 'number',
+                            read: true,
+                            write: false,
+                        },
+                        native: {}
+                    });
+                    adapter.setState(obj_name, privates.devices[d].status.battery, true);
+                } else {
+                    var obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'led_mode';
+                    adapter.setObject(obj_name, {
+                        type: 'state',
+                        common: {
+                            name: 'led_mode',
+                            role: 'indicator',
+                            type: 'number',
+                            read: true,
+                            write: false,
+                            states: {0: 'OFF', 1:'HIGH', 4:'DIMMED' }
+                        },
+                        native: {}
+                    });
+                    adapter.setState(obj_name, privates.devices[d].status.led_mode, true);
+                }
+                // online status
+                obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'online';
+                adapter.setObject(obj_name, {
+                    type: 'state',
+                    common: {
+                        name: 'online',
+                        role: 'indicator',
+                        type: 'boolean',
+                        read: true,
+                        write: false,
+                    },
+                    native: {}
+                });
+                adapter.setState(obj_name, privates.devices[d].status.online, true);
+            }                
+        }
     }
-    var options = build_options('/api/me/start', 'GET', privates['token']);
-
-    var req = https.request(options, (res) => {
-        adapter.log.debug('get_control statusCode: ' + res.statusMessage + '(' +  res.statusCode + ')');
-        adapter.log.debug('get_control headers:' + util.inspect(res.headers, false, null, true /* enable colors */));
-
-        var data = [];
-        res.on('data', (chunk) => {
-            data.push(chunk);
-        });
-        res.on('end', () => {
-            var obj = JSON.parse(data.join(''));
-            adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
-            privates.devices = obj.data.devices;
-            privates.households = obj.data.households;
-            privates.pets = obj.data.pets;
-            callback();
-        });
-    });
-
-    req.on('error', (e) => {
-        console.error(e);
-    });
-
-    req.write('');
-    req.end();
 }
+
+function get_control(callback) {
+    var options = build_options('/api/me/start', 'GET', privates['token']);
+    do_request('get_control', options, '', function(obj) {
+        privates.devices = obj.data.devices;
+        privates.households = obj.data.households;
+        privates.pets = obj.data.pets;
+
+        set_status();
+
+        callback();
+    });
+}
+
