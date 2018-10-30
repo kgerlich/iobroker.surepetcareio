@@ -41,7 +41,7 @@
         "username": "xxx@yyy.com",
         "password": "******"
     },
-    "objects": [
+    "instanceObjects": [
         {
             "_id": "connected",
             "type": "state",
@@ -50,8 +50,9 @@
                 "type": "boolean",
                 "read":  true,
                 "write": false,
-				"role":  "text"
-            }
+				"role":  "indicator"
+            },
+            "native": {}
         }
     ]
 }

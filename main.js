@@ -49,7 +49,7 @@ const prettyMs = require('pretty-ms');
 adapter.on('unload', function (callback) {
     try {
         adapter.log.info('cleaned everything up...');
-        adapter.setState('connected', false, true);
+        adapter && adapter.setState && adapter.setState('connected', false, true);
         callback();
     } catch (e) {
         callback();
