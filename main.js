@@ -118,10 +118,14 @@ function do_request(tag, options, postData, callback) {
             data.push(chunk);
         });
         res.on('data', () => {
-            var obj = JSON.parse(data.join(''));
-            adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
-
-            callback(obj);
+            try {
+                var obj = JSON.parse(data.join(''));
+                adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
+                callback(obj);
+            } catch(err) {
+                adapter.log.debug(err.message);
+                adapter.log.debug('error in ' + data.toString());
+            }
         });
     });
 
