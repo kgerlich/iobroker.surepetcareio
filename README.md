@@ -19,27 +19,27 @@ function sendNotificationMail(subject, body="")
     var d = new Date();
    
     sendTo("email", {
-        from:    "from@owner.cat",
-        to:      "to@owner.cat",
-        subject: "[cat door notification " + d.toString() + "]: " + subject,
+        from:    "from@owner.pet",
+        to:      "to@owner.pet",
+        subject: "[pet door notification " + d.toString() + "]: " + subject,
         text:    body
     });
 }
 
 function catChanged(obj)
 {
-    var name = obj.id.split('.').splice(-1)[0];
+    console.log(util.inspect(obj, { showHidden: true, depth: null }));
+    var name = obj.name;
     if (obj.newState.val === true && obj.state.ack === true) {
-        console.log('cat in name: ' + name);
-        sendNotificationMail("Katze " + name + " inside!", name);
+        console.log('pet in name: ' + name);
+        sendNotificationMail("pet " + name + " inside!", name);
     } else if (obj.newState.val === false  && obj.state.ack === true) {
-        console.log('cat out name: ' + name);
-        sendNotificationMail("Katze " + name + " outside!", name);
+        console.log('pet out name: ' + name);
+        sendNotificationMail("pet " + name + " outside!", name);
     }
 }
 
-// Katze raus/rein
-on(/^surepetcareio\.0\.household.*\..*$/, catChanged);
+on(/^surepetcareio\.0\.household.*\.pets\..*$/, catChanged);
 </pre>
 
 
