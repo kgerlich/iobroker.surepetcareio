@@ -45,6 +45,8 @@ const https = require('https');
 const util = require('util')
 const prettyMs = require('pretty-ms');
 
+var numberOfLogins = 0;
+
 // is called when adapter shuts down - callback has to be called under any circumstances!
 adapter.on('unload', function (callback) {
     try {
@@ -113,6 +115,11 @@ function do_request(tag, options, postData, callback) {
         adapter.log.debug(tag +' statusCode: ' + res.statusMessage + '(' +  res.statusCode + ')');
         adapter.log.debug(tag + 'headers:' + util.inspect(res.headers, false, null, true /* enable colors */));
     
+        if (res.statusCode !== 200) {
+            adapter.log.debug("status code not OK!");
+            do_login();
+        }
+
         var data = [];
         res.on('data', (chunk) => {
             data.push(chunk);
@@ -125,12 +132,14 @@ function do_request(tag, options, postData, callback) {
             } catch(err) {
                 adapter.log.debug(err.message);
                 adapter.log.debug('error in ' + data.toString());
+                do_login();
             }
         });
     });
 
     req.on('error', (e) => {
         adapter.log.error(e);
+        do_login();
     });
 
     req.write(postData);
@@ -138,7 +147,9 @@ function do_request(tag, options, postData, callback) {
 }
 
 function do_login() {
-    console.info('trying to login...');
+    privates = {};
+    numberOfLogins++;
+    console.info('trying to login (' + numberOfLogins + ')...');
     login(adapter.config.username, adapter.config.password, get_household);
 }
 
