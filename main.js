@@ -79,12 +79,14 @@ function main() {
 }
 
 var privates = {};
+var timerId = 0;
 
 function timeout_callback()
 {
+    clearTimeout(timerId);
     get_control(function() {
         set_pets()
-        setTimeout(timeout_callback, 10*1000);
+        timerId = setTimeout(timeout_callback, 10*1000);
     });
 }
 
@@ -178,7 +180,7 @@ function get_household() {
         privates['household'] = obj.data[0]['id'];
         adapter.setState('connected',true, true, function(err) {
             adapter.log.info('connected...');
-            setTimeout(timeout_callback, 100);
+            timeout_callback();
         });
     });
 }
