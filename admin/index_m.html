@@ -19,10 +19,16 @@
   .m .col .select-wrapper+label {
    top: -26px;  
   }
-     .m span{
-         font-size: 0.9em;
-     }
- </style>
+    .m span{
+        font-size: 0.9em;
+    }
+    img {
+        width: 90px;
+        height: 90px;
+        background: 50% no-repeat;
+        border: 1px solid black;
+        border-radius: 5px;
+    } </style>
 <!-- you have to define 2 functions in the global scope: -->
 <script type="text/javascript">
     function start(token, callback) {
@@ -77,12 +83,12 @@
         login(settings, function (data) {
             console.log(data);
             var content = "<table class='bouncy'>"
-            for (i=0 ; i < data.data.households.length; i++) {
+            for (var i=0 ; i < data.data.households.length; i++) {
                 content += '<tr><td>' + 'household ' +  data.data.households[i].id + '</td><td>';
                 content += data.data.households[i].name;
                 content += "<table class='bouncy'>"
-                for (i=0 ; i < data.data.pets.length; i++) {
-                    content += '<tr><td>' + +  i + '</td><td>' + data.data.pets[i].name +'</td></tr>';
+                for (var p=0 ; p < data.data.pets.length; p++) {
+                    content += '<tr><td>' + p + '</td><td>' + data.data.pets[p].name +'</td><td><img id="pet_img_' + p + '"></td></tr>';
                 }
                 content += "</table>"
                 content +='</td></tr>';
@@ -94,6 +100,19 @@
             $("table.bouncy tr:odd").css("background-color", "#EFF1F1");
 
             $( "#households" ).show( 'bounce', {}, 1000, function () {} );
+
+            for (var i=0 ; i < data.data.households.length; i++) {
+                for (let p=0 ; p < data.data.pets.length; p++) {
+                    let downloadingImage = new Image();
+                    downloadingImage.onload = function() {
+                        console.log("downloaded (" + p + ") " + this.src);
+                        var img = "pet_img_" + p;
+                        var sel = $("#" + img);
+                        sel.attr('src', this.src);   
+                    };
+                    downloadingImage.src = data.data.pets[p].photo.location;
+                }
+            }
         });
 
         $('.value').each(function () {            
