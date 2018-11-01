@@ -117,7 +117,7 @@ function do_request(tag, options, postData, callback) {
     
         if (res.statusCode !== 200) {
             adapter.log.debug("status code not OK!");
-            do_login();
+            setTimeout(do_login, 5*1000);
         }
 
         var data = [];
@@ -132,14 +132,14 @@ function do_request(tag, options, postData, callback) {
             } catch(err) {
                 adapter.log.debug(err.message);
                 adapter.log.debug('error in ' + data.toString());
-                do_login();
+                setTimeout(do_login, 5*1000);
             }
         });
     });
 
     req.on('error', (e) => {
         adapter.log.error(e);
-        do_login();
+        setTimeout(do_login, 5*1000);
     });
 
     req.write(postData);
@@ -147,10 +147,13 @@ function do_request(tag, options, postData, callback) {
 }
 
 function do_login() {
-    privates = {};
-    numberOfLogins++;
-    console.info('trying to login (' + numberOfLogins + ')...');
-    login(adapter.config.username, adapter.config.password, get_household);
+    adapter.setState('connected',true, true, function(err) {
+        adapter.log.info('not connected...');
+        privates = {};
+        numberOfLogins++;
+        console.info('trying to login (' + numberOfLogins + ')...');
+        login(adapter.config.username, adapter.config.password, get_household);
+    });    
 }
 
 function login(username, password, callback) {
