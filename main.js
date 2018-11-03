@@ -251,7 +251,7 @@ function set_pets() {
             native: {}
         });
 
-        if (!privates_prev.devices || (where !== privates_prev.privates.pets[i].position)) {
+        if (!privates_prev.devices || (where !== privates_prev.pets[i].position)) {
             var obj_name = prefix + '.' + i;
             adapter.setObject(obj_name, {
                 type: 'state',
