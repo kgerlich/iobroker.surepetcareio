@@ -31,7 +31,7 @@
         "enabled": true,
         "extIcon": "https://raw.githubusercontent.com/kgerlich/ioBroker.surepetcareio/master/admin/surepetcareio.png",
         "keywords": ["surepetcareio", "pet", "door"],
-        "readme": "https://github.com/ioBroker/ioBroker.surepetcareio/blob/master/README.md",
+        "readme": "https://github.com/kgerlich/ioBroker.surepetcareio/blob/master/README.md",
         "loglevel": "info",
         "type": "hardware",
         "license": "MIT",
