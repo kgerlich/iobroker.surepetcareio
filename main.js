@@ -64,6 +64,45 @@ adapter.on('ready', function () {
     main();
 });
 
+adapter.on('stateChange', function (id, state) {
+    // only process if state was command.
+    if (!id || !state || state.ack) {
+        return;
+    }
+    var l = id.split('.');
+    if ((l.length != 7) || l[l.length - 2] !== 'control') {
+        adapter.info('what are you trying to set in ' + id + '???');
+        return;
+    }
+    var lockmode = 0;
+    if (state.val === true) {
+        switch (l[l.length - 1])
+        {
+            case 'lockinside':
+                lockmode = 1;
+                break;
+            case 'lockoutside':
+                lockmode = 2;
+                break;
+            case 'lockboth':
+                lockmode = 3;
+                break;
+            default:
+                adapter.info('what are you trying to set in ' + id + '???');
+                return;
+        }
+    }
+    adapter.log.info(id + util.inspect(state, true, null, true /* enable colors */));
+    let locking_state = l.splice(0,5).join('.') + '.locking';
+    adapter.getState(locking_state, function(err, state) {
+        if(state.val !== lockmode) {
+            adapter.log.info('locking mode changed to ' + lockmode);
+            var device = locking_state.split('.').splice(4,1).join('.');
+            set_lockmode(device, lockmode);
+        }
+    });
+});
+
 function main() {
 
     // The adapters config (in the instance object everything under the attribute "native") is accessible via
@@ -80,6 +119,7 @@ function main() {
 
 var privates = {};
 var timerId = 0;
+var privates_prev = {};
 
 function timeout_callback()
 {
@@ -193,7 +233,15 @@ function set_pets() {
         var since = privates.pets[i].position.since;
         adapter.log.info(name + ' is ' + where + ' since ' + prettyMs(Date.now() - new Date(since)));
 
-        var prefix = 'household' + privates.pets[i].household_id + '.pets';
+        var household_name = '';
+        for (var j=0; j < privates.households.length;j++) {
+            if (privates.households[j].id === privates.pets[i].household_id) {
+                household_name = privates.households[j].name;
+                break;
+            }
+        }
+
+        var prefix = household_name + '.pets';
         adapter.setObject(prefix, {
             type: 'channel',
             common: {
@@ -203,32 +251,34 @@ function set_pets() {
             native: {}
         });
 
-        var obj_name = prefix + '.' + i;
-        adapter.setObject(obj_name, {
-            type: 'state',
-            common: {
-                name: name,
-                type: 'boolean',
-                role: 'indicator',
-                icon: 'surepetcareio.png',
-                read: true,
-                write: false
-            },
-            native: {}
-        });
+        if (!privates_prev.devices || (where !== privates_prev.privates.pets[i].position)) {
+            var obj_name = prefix + '.' + i;
+            adapter.setObject(obj_name, {
+                type: 'state',
+                common: {
+                    name: name,
+                    type: 'boolean',
+                    role: 'indicator',
+                    icon: 'surepetcareio.png',
+                    read: true,
+                    write: false
+                },
+                native: {}
+            });
 
-        adapter.setState(obj_name, (where == 1) ? true : false, true);
+            adapter.setState(obj_name, (where == 1) ? true : false, true);
+        }
     }
 }
 
 function set_status() {
     for(var h = 0; h < privates.households.length; h++) {
-        var prefix = 'household' + privates.households[h].id + '.devices';
+        var prefix = privates.households[h].name + '.devices';
        
         adapter.setObject(prefix, {
             type: 'channel',
             common: {
-                name: 'Devices in household ' + privates.households[h].id,
+                name: 'Devices in household ' + privates.households[h].name + '(' + privates.households[h].id + ')',
                 role: 'info'
             },
             native: {}
@@ -249,64 +299,125 @@ function set_status() {
                 if ('parent' in privates.devices[d]) {
                     // locking status
                     var obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'locking';
-                    adapter.setObject(obj_name, {
-                        type: 'state',
-                        common: {
-                            name: 'locking',
-                            role: 'indicator',
-                            type: 'number',
-                            read: true,
-                            write: false,
-                            states: {0: 'OPEN', 1:'LOCKED INSIDE', 2:'LOCKED OUTSIDE', 3:'LOCKED BOTH', 4:'CURFEW' }
-                        },
-                        native: {}
-                    });
-                    adapter.setState(obj_name, privates.devices[d].status.locking.mode, true);
+                    if (!privates_prev.devices || (privates.devices[d].status.locking !== privates_prev.devices[d].status.locking)) {
+                        adapter.setObject(obj_name, {
+                            type: 'state',
+                            common: {
+                                name: 'locking',
+                                role: 'indicator',
+                                type: 'number',
+                                read: true,
+                                write: false,
+                                states: {0: 'OPEN', 1:'LOCKED INSIDE', 2:'LOCKED OUTSIDE', 3:'LOCKED BOTH', 4:'CURFEW' }
+                            },
+                            native: {}
+                        });
+                        adapter.setState(obj_name, privates.devices[d].status.locking.mode, true);
+                    }
 
                     // battery status
                     obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'battery';
-                    adapter.setObject(obj_name, {
-                        type: 'state',
-                        common: {
-                            name: 'battery',
-                            role: 'indicator',
-                            type: 'number',
-                            read: true,
-                            write: false,
-                        },
-                        native: {}
-                    });
-                    adapter.setState(obj_name, privates.devices[d].status.battery, true);
+                    if (!privates_prev.devices || (privates.devices[d].status.battery !== privates_prev.devices[d].status.battery)) {
+                        adapter.setObject(obj_name, {
+                            type: 'state',
+                            common: {
+                                name: 'battery',
+                                role: 'indicator',
+                                type: 'number',
+                                read: true,
+                                write: false,
+                            },
+                            native: {}
+                        });
+                        adapter.setState(obj_name, privates.devices[d].status.battery, true);
+                    }
+
+                    // lock control
+                    var control_name = 'lockinside';
+                    obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
+                    if (!privates_prev.devices || (privates.devices[d].status.locking.mode !== privates_prev.devices[d].status.locking.mode)) {
+                        adapter.setObject(obj_name, {
+                            type: 'state',
+                            common: {
+                                name: control_name,
+                                role: 'switch',
+                                type: 'boolean',
+                                read: true,
+                                write: true,
+                            },
+                            native: {}
+                        });
+                        adapter.setState(obj_name, privates.devices[d].status.locking.mode === 1, true);
+                    }
+
+                    control_name = 'lockoutside';
+                    obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
+                    if (!privates_prev.devices || (privates.devices[d].status.locking.mode !== privates_prev.devices[d].status.locking.mode)) {
+                        adapter.setObject(obj_name, {
+                            type: 'state',
+                            common: {
+                                name: control_name,
+                                role: 'switch',
+                                type: 'boolean',
+                                read: true,
+                                write: true,
+                            },
+                            native: {}
+                        });
+                        adapter.setState(obj_name, privates.devices[d].status.locking.mode === 2, true);
+                    }
+
+                    control_name = 'lockboth';
+                    obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
+                    if (!privates_prev.devices || (privates.devices[d].status.locking.mode !== privates_prev.devices[d].status.locking.mode)) {
+                        adapter.setObject(obj_name, {
+                            type: 'state',
+                            common: {
+                                name: control_name,
+                                role: 'switch',
+                                type: 'boolean',
+                                read: true,
+                                write: true,
+                            },
+                            native: {}
+                        });
+                        adapter.setState(obj_name, privates.devices[d].status.locking.mode === 3, true);
+                    }
+
                 } else {
                     var obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'led_mode';
-                    adapter.setObject(obj_name, {
-                        type: 'state',
-                        common: {
-                            name: 'led_mode',
-                            role: 'indicator',
-                            type: 'number',
-                            read: true,
-                            write: false,
-                            states: {0: 'OFF', 1:'HIGH', 4:'DIMMED' }
-                        },
-                        native: {}
-                    });
-                    adapter.setState(obj_name, privates.devices[d].status.led_mode, true);
+                    if (!privates_prev.devices || (privates.devices[d].status.led_mode !== privates_prev.devices[d].status.led_mode)) {
+                        adapter.setObject(obj_name, {
+                            type: 'state',
+                            common: {
+                                name: 'led_mode',
+                                role: 'indicator',
+                                type: 'number',
+                                read: true,
+                                write: false,
+                                states: {0: 'OFF', 1:'HIGH', 4:'DIMMED' }
+                            },
+                            native: {}
+                        });
+                        adapter.setState(obj_name, privates.devices[d].status.led_mode, true);
+                    }
                 }
                 // online status
                 obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'online';
-                adapter.setObject(obj_name, {
-                    type: 'state',
-                    common: {
-                        name: 'online',
-                        role: 'indicator',
-                        type: 'boolean',
-                        read: true,
-                        write: false,
-                    },
-                    native: {}
-                });
-                adapter.setState(obj_name, privates.devices[d].status.online, true);
+                if (!privates_prev.devices || (privates.devices[d].status.online !== privates_prev.devices[d].status.online)) {
+                    adapter.setObject(obj_name, {
+                        type: 'state',
+                        common: {
+                            name: 'online',
+                            role: 'indicator',
+                            type: 'boolean',
+                            read: true,
+                            write: false,
+                        },
+                        native: {}
+                    });
+                    adapter.setState(obj_name, privates.devices[d].status.online, true);
+                }
             }                
         }
     }
@@ -315,6 +426,7 @@ function set_status() {
 function get_control(callback) {
     var options = build_options('/api/me/start', 'GET', privates['token']);
     do_request('get_control', options, '', function(obj) {
+        privates_prev = JSON.parse(JSON.stringify(privates));
         privates.devices = obj.data.devices;
         privates.households = obj.data.households;
         privates.pets = obj.data.pets;
@@ -325,3 +437,19 @@ function get_control(callback) {
     });
 }
 
+function set_lockmode(device, lockmode) {
+    adapter.log.info(privates);
+    var device_id = 0;
+    for (var i=0; i < privates.devices.length; i++) {
+        if (privates.devices[i].name === device) {
+            device_id = privates.devices[i].id;
+        }
+    }
+
+     var postData = JSON.stringify( { 'locking':lockmode } );
+     var options = build_options('/api/device/' + device_id + '/control', 'PUT', privates['token']);
+  
+     do_request('login', options, postData, function(obj) {
+         adapter.log.debug(obj);
+     });
+}
