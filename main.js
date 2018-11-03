@@ -96,7 +96,7 @@ adapter.on('stateChange', function (id, state) {
     let locking_state = l.splice(0,5).join('.') + '.locking';
     adapter.getState(locking_state, function(err, state) {
         if(state.val !== lockmode) {
-            adapter.log.info('locking mode changed to ' + lockmode);
+            adapter.log.info('locking mode changing to ' + lockmode);
             var device = locking_state.split('.').splice(4,1).join('.');
             set_lockmode(device, lockmode);
         }
@@ -438,7 +438,6 @@ function get_control(callback) {
 }
 
 function set_lockmode(device, lockmode) {
-    adapter.log.info(privates);
     var device_id = 0;
     for (var i=0; i < privates.devices.length; i++) {
         if (privates.devices[i].name === device) {
@@ -449,7 +448,7 @@ function set_lockmode(device, lockmode) {
      var postData = JSON.stringify( { 'locking':lockmode } );
      var options = build_options('/api/device/' + device_id + '/control', 'PUT', privates['token']);
   
-     do_request('login', options, postData, function(obj) {
-         adapter.log.debug(obj);
+     do_request('set_lockmode', options, postData, function(obj) {
+        adapter.log.info('locking mode changed to ' + lockmode);
      });
 }
