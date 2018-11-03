@@ -112,7 +112,6 @@ function main() {
 
     // in this surepetcareio all states changes inside the adapters namespace are subscribed
     adapter.subscribeStates('*');
-    adapter.setState('connected', false, true);
 
     do_login();
 }
@@ -189,7 +188,7 @@ function do_request(tag, options, postData, callback) {
 }
 
 function do_login() {
-    adapter.setState('connected',true, true, function(err) {
+    adapter.setState('connected',false, true, function(err) {
         adapter.log.info('not connected...');
         privates = {};
         numberOfLogins++;
@@ -227,31 +226,35 @@ function get_household() {
 
 function set_pets() {
     var len = privates.pets.length;
-    for (var i = 0; i < len; i++) {
+    for (let i = 0; i < len; i++) {
         var name = privates.pets[i].name;
         var where = privates.pets[i].position.where;
         var since = privates.pets[i].position.since;
         adapter.log.info(name + ' is ' + where + ' since ' + prettyMs(Date.now() - new Date(since)));
 
-        var household_name = '';
-        for (var j=0; j < privates.households.length;j++) {
+        let household_name = '';
+        for (let j = 0; j < privates.households.length;j++) {
             if (privates.households[j].id === privates.pets[i].household_id) {
                 household_name = privates.households[j].name;
                 break;
             }
         }
 
-        var prefix = household_name + '.pets';
-        adapter.setObject(prefix, {
-            type: 'channel',
-            common: {
-                name: 'Pets in household ' + privates.pets[i].household_id,
-                role: 'info'
-            },
-            native: {}
+        let prefix = household_name + '.pets';
+        adapter.getObject(prefix, function(err, obj) { 
+            if (!obj) {
+                adapter.setObject(prefix, {
+                    type: 'channel',
+                    common: {
+                        name: 'Pets in household ' + privates.pets[i].household_id,
+                        role: 'info'
+                    },
+                    native: {}
+                });
+            }
         });
 
-        if (!privates_prev.devices || (where !== privates_prev.pets[i].position)) {
+        if (!privates_prev.pets || (where !== privates_prev.pets[i].position.where)) {
             var obj_name = prefix + '.' + i;
             adapter.setObject(obj_name, {
                 type: 'state',
@@ -272,34 +275,51 @@ function set_pets() {
 }
 
 function set_status() {
-    for(var h = 0; h < privates.households.length; h++) {
-        var prefix = privates.households[h].name + '.devices';
+    for(let h = 0; h < privates.households.length; h++) {
+        let prefix = privates.households[h].name + '.devices';
        
-        adapter.setObject(prefix, {
-            type: 'channel',
-            common: {
-                name: 'Devices in household ' + privates.households[h].name + '(' + privates.households[h].id + ')',
-                role: 'info'
-            },
-            native: {}
-        });
-       
-        for(var d = 0; d < privates.devices.length; d++) {
-            if (privates.devices[d].household_id ==  privates.households[h].id) {
-                var obj_name =  prefix + '.' + privates.devices[d].name;
-                adapter.setObject(obj_name, {
+        adapter.getObject(prefix, function(err, obj) { 
+            if (!obj) {
+                adapter.setObject(prefix, {
                     type: 'channel',
                     common: {
-                        name: privates.devices[d].name,
-                        role: ''
+                        name: 'Devices in household ' + privates.households[h].name + '(' + privates.households[h].id + ')',
+                        role: 'info'
                     },
                     native: {}
                 });
+            }
+        });
+
+        for(let d = 0; d < privates.devices.length; d++) {
+            if (privates.devices[d].household_id ==  privates.households[h].id) {
+                let obj_name =  prefix + '.' + privates.devices[d].name;
+                adapter.getObject(obj_name, function(err, obj) { 
+                    if (!obj) {
+                        adapter.setObject(obj_name, {
+                        type: 'channel',
+                        common: {
+                            name: privates.devices[d].name,
+                            role: ''
+                        },
+                        native: {}
+                        });
+                    }
+                });
+            }
+        }
+    }
+    for(let h = 0; h < privates.households.length; h++) {
+        let prefix = privates.households[h].name + '.devices';
+       
+        for(let d = 0; d < privates.devices.length; d++) {
+            if (privates.devices[d].household_id ==  privates.households[h].id) {
 
                 if ('parent' in privates.devices[d]) {
                     // locking status
-                    var obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'locking';
-                    if (!privates_prev.devices || (privates.devices[d].status.locking !== privates_prev.devices[d].status.locking)) {
+                    let obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'locking';
+                    let locking_mode_changed = false;
+                    if (!privates_prev.devices || (privates.devices[d].status.locking.mode !== privates_prev.devices[d].status.locking.mode)) {
                         adapter.setObject(obj_name, {
                             type: 'state',
                             common: {
@@ -313,6 +333,7 @@ function set_status() {
                             native: {}
                         });
                         adapter.setState(obj_name, privates.devices[d].status.locking.mode, true);
+                        locking_mode_changed = true;
                     }
 
                     // battery status
@@ -335,7 +356,7 @@ function set_status() {
                     // lock control
                     var control_name = 'lockinside';
                     obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
-                    if (!privates_prev.devices || (privates.devices[d].status.locking.mode !== privates_prev.devices[d].status.locking.mode)) {
+                    if (locking_mode_changed) {
                         adapter.setObject(obj_name, {
                             type: 'state',
                             common: {
@@ -352,7 +373,7 @@ function set_status() {
 
                     control_name = 'lockoutside';
                     obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
-                    if (!privates_prev.devices || (privates.devices[d].status.locking.mode !== privates_prev.devices[d].status.locking.mode)) {
+                    if (locking_mode_changed) {
                         adapter.setObject(obj_name, {
                             type: 'state',
                             common: {
@@ -369,7 +390,7 @@ function set_status() {
 
                     control_name = 'lockboth';
                     obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
-                    if (!privates_prev.devices || (privates.devices[d].status.locking.mode !== privates_prev.devices[d].status.locking.mode)) {
+                    if (locking_mode_changed) {
                         adapter.setObject(obj_name, {
                             type: 'state',
                             common: {
