@@ -338,131 +338,201 @@ function set_status() {
 
                 if ('parent' in privates.devices[d]) {
                     // locking status
-                    let obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'locking';
                     let locking_mode_changed = false;
                     if (!privates_prev.devices || (privates.devices[d].status.locking.mode !== privates_prev.devices[d].status.locking.mode)) {
-                        adapter.setObject(obj_name, {
-                            type: 'state',
-                            common: {
-                                name: 'locking',
-                                role: 'indicator',
-                                type: 'number',
-                                read: true,
-                                write: false,
-                                states: {0: 'OPEN', 1:'LOCKED INSIDE', 2:'LOCKED OUTSIDE', 3:'LOCKED BOTH', 4:'CURFEW' }
-                            },
-                            native: {}
+                        let obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'locking';
+                        adapter.getObject(obj_name, function(err, obj) { 
+                            if (!obj) {
+                                adapter.setObject(obj_name, {
+                                    type: 'state',
+                                    common: {
+                                        name: 'locking',
+                                        role: 'indicator',
+                                        type: 'number',
+                                        read: true,
+                                        write: false,
+                                        states: {0: 'OPEN', 1:'LOCKED INSIDE', 2:'LOCKED OUTSIDE', 3:'LOCKED BOTH', 4:'CURFEW' }
+                                    },
+                                    native: {}
+                                });
+                            }
                         });
                         adapter.setState(obj_name, privates.devices[d].status.locking.mode, true);
                         locking_mode_changed = true;
                     }
 
                     // battery status
-                    obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'battery';
                     if (!privates_prev.devices || (privates.devices[d].status.battery !== privates_prev.devices[d].status.battery)) {
-                        adapter.setObject(obj_name, {
-                            type: 'state',
-                            common: {
-                                name: 'battery',
-                                role: 'indicator',
-                                type: 'number',
-                                read: true,
-                                write: false,
-                            },
-                            native: {}
+                        let obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'battery';
+                        adapter.getObject(obj_name, function(err, obj) { 
+                            if (!obj) {
+                                adapter.setObject(obj_name, {
+                                    type: 'state',
+                                    common: {
+                                        name: 'battery',
+                                        role: 'indicator',
+                                        type: 'number',
+                                        read: true,
+                                        write: false,
+                                    },
+                                    native: {}
+                                });
+                            }
                         });
                         adapter.setState(obj_name, privates.devices[d].status.battery, true);
                     }
 
+                    if (!privates_prev.devices || (privates.devices[d].status.battery_percentage !== privates_prev.devices[d].status.battery_percentage)) {
+                        let obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'battery_percentage';
+                        adapter.getObject(obj_name, function(err, obj) { 
+                            if (!obj) {
+                                adapter.setObject(obj_name, {
+                                    type: 'state',
+                                    common: {
+                                        name: 'battery_percentage',
+                                        role: 'indicator',
+                                        type: 'number',
+                                        read: true,
+                                        write: false,
+                                    },
+                                    native: {}
+                                });
+                            }
+                        });
+                        adapter.setState(obj_name, privates.devices[d].status.battery_percentage, true);
+                    }
+
+
                     // lock control
-                    var control_name = 'lockinside';
-                    obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
                     if (locking_mode_changed) {
-                        adapter.setObject(obj_name, {
-                            type: 'state',
-                            common: {
-                                name: control_name,
-                                role: 'switch',
-                                type: 'boolean',
-                                read: true,
-                                write: true,
-                            },
-                            native: {}
+                        let control_name = 'lockinside';
+                        let obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
+                        adapter.getObject(obj_name, function(err, obj) { 
+                            if (!obj) {
+                                adapter.setObject(obj_name, {
+                                    type: 'state',
+                                    common: {
+                                        name: control_name,
+                                        role: 'switch',
+                                        type: 'boolean',
+                                        read: true,
+                                        write: true,
+                                    },
+                                    native: {}
+                                });
+                            }
                         });
                         adapter.setState(obj_name, privates.devices[d].status.locking.mode === 1, true);
                     }
 
-                    control_name = 'lockoutside';
-                    obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
                     if (locking_mode_changed) {
-                        adapter.setObject(obj_name, {
-                            type: 'state',
-                            common: {
-                                name: control_name,
-                                role: 'switch',
-                                type: 'boolean',
-                                read: true,
-                                write: true,
-                            },
-                            native: {}
+                        let control_name = 'lockoutside';
+                        let obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
+                        adapter.getObject(obj_name, function(err, obj) { 
+                            if (!obj) {
+                                adapter.setObject(obj_name, {
+                                    type: 'state',
+                                    common: {
+                                        name: control_name,
+                                        role: 'switch',
+                                        type: 'boolean',
+                                        read: true,
+                                        write: true,
+                                    },
+                                    native: {}
+                                });
+                            }
                         });
                         adapter.setState(obj_name, privates.devices[d].status.locking.mode === 2, true);
                     }
 
-                    control_name = 'lockboth';
-                    obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
                     if (locking_mode_changed) {
-                        adapter.setObject(obj_name, {
-                            type: 'state',
-                            common: {
-                                name: control_name,
-                                role: 'switch',
-                                type: 'boolean',
-                                read: true,
-                                write: true,
-                            },
-                            native: {}
+                        let control_name = 'lockboth';
+                        let obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
+                        adapter.getObject(obj_name, function(err, obj) { 
+                            if (!obj) {
+                                adapter.setObject(obj_name, {
+                                    type: 'state',
+                                    common: {
+                                        name: control_name,
+                                        role: 'switch',
+                                        type: 'boolean',
+                                        read: true,
+                                        write: true,
+                                    },
+                                    native: {}
+                                });
+                            }
                         });
                         adapter.setState(obj_name, privates.devices[d].status.locking.mode === 3, true);
                     }
 
                 } else {
-                    var obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'led_mode';
                     if (!privates_prev.devices || (privates.devices[d].status.led_mode !== privates_prev.devices[d].status.led_mode)) {
-                        adapter.setObject(obj_name, {
-                            type: 'state',
-                            common: {
-                                name: 'led_mode',
-                                role: 'indicator',
-                                type: 'number',
-                                read: true,
-                                write: false,
-                                states: {0: 'OFF', 1:'HIGH', 4:'DIMMED' }
-                            },
-                            native: {}
+                        let obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'led_mode';
+                        adapter.getObject(obj_name, function(err, obj) { 
+                            if (!obj) {
+                                adapter.setObject(obj_name, {
+                                    type: 'state',
+                                    common: {
+                                        name: 'led_mode',
+                                        role: 'indicator',
+                                        type: 'number',
+                                        read: true,
+                                        write: false,
+                                        states: {0: 'OFF', 1:'HIGH', 4:'DIMMED' }
+                                    },
+                                    native: {}
+                                });
+                            }
                         });
                         adapter.setState(obj_name, privates.devices[d].status.led_mode, true);
                     }
                 }
                 // online status
-                obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'online';
                 if (!privates_prev.devices || (privates.devices[d].status.online !== privates_prev.devices[d].status.online)) {
-                    adapter.setObject(obj_name, {
-                        type: 'state',
-                        common: {
-                            name: 'online',
-                            role: 'indicator',
-                            type: 'boolean',
-                            read: true,
-                            write: false,
-                        },
-                        native: {}
+                    let obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'online';
+                    adapter.getObject(obj_name, function(err, obj) { 
+                        if (!obj) {
+                        adapter.setObject(obj_name, {
+                                type: 'state',
+                                common: {
+                                    name: 'online',
+                                    role: 'indicator',
+                                    type: 'boolean',
+                                    read: true,
+                                    write: false,
+                                },
+                                native: {}
+                            });
+                        }
                     });
                     adapter.setState(obj_name, privates.devices[d].status.online, true);
                 }
             }                
         }
     }
+}
+
+Number.prototype.between = function(a, b) {
+    var min = Math.min(a, b),
+      max = Math.max(a, b);
+  
+    return this > min && this < max;
+};
+
+function calculate_battery_percentage(battery)
+{
+    if (battery <= 4.8) {
+        return 0.0;
+    } else if (battery.between(4.8, 5.1)) {
+        return 25.0;
+    } else if (battery.between(5.1, 5.4)) {
+        return 75.0;
+    } else if (battery.between(5.4, 5.6)) {
+        return 100.0;
+    }
+    return -1.0;
 }
 
 function get_control(callback) {
@@ -472,10 +542,13 @@ function get_control(callback) {
         privates.devices = obj.data.devices;
         privates.households = obj.data.households;
         privates.pets = obj.data.pets;
-
+        
         privates.all_devices_online = true;
         for (let d = 0; d < privates.devices.length; d++) {
             privates.all_devices_online = privates.all_devices_online && privates.devices[d].status.online;
+            if (privates.devices[d].status.battery) {
+                privates.devices[d].status.battery_percentage = calculate_battery_percentage(privates.devices[d].status.battery);
+            }
         }
 
         set_status();
