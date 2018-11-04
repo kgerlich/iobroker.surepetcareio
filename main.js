@@ -296,6 +296,26 @@ function set_status() {
         adapter.setState(obj_name, privates.all_devices_online, true);
     }
 
+    if (!privates_prev.offline_devices || (privates.offline_devices !== privates_prev.offline_devices)) {
+        let obj_name = 'offline_devices';
+        adapter.getObject(obj_name, function(err, obj) { 
+            if (!obj) {
+                adapter.setObject(obj_name, {
+                type: 'state',
+                common: {
+                    name: 'offline devices',
+                    role: 'indicator',
+                    type: 'text',
+                    read: true,
+                    write: false,
+                },
+                native: {}
+                });
+            }
+        });
+        adapter.setState(obj_name, privates.offline_devices.join(';'), true);
+    }
+
     for(let h = 0; h < privates.households.length; h++) {
         let prefix = privates.households[h].name + '.devices';
        
@@ -544,8 +564,12 @@ function get_control(callback) {
         privates.pets = obj.data.pets;
         
         privates.all_devices_online = true;
+        privates.offline_devices = [];
         for (let d = 0; d < privates.devices.length; d++) {
             privates.all_devices_online = privates.all_devices_online && privates.devices[d].status.online;
+            if (!privates.devices[d].status.online) {
+                privates.offline_devices.push(privates.devices[d].name);
+            }
             if (privates.devices[d].status.battery) {
                 privates.devices[d].status.battery_percentage = calculate_battery_percentage(privates.devices[d].status.battery);
             }
