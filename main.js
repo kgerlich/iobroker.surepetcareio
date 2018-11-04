@@ -154,7 +154,7 @@ function build_options(path, method, token) {
 function do_request(tag, options, postData, callback) {
     var req = https.request(options, (res) => {
         adapter.log.debug(tag +' statusCode: ' + res.statusMessage + '(' +  res.statusCode + ')');
-        adapter.log.debug(tag + 'headers:' + util.inspect(res.headers, false, null, true /* enable colors */));
+        adapter.log.debug(tag + ' headers:' + util.inspect(res.headers, false, null, true /* enable colors */));
     
         if (res.statusCode !== 200) {
             adapter.log.debug("status code not OK!");
@@ -275,6 +275,27 @@ function set_pets() {
 }
 
 function set_status() {
+    // all devices online status
+    if (!privates_prev.all_devices_online || (privates.all_devices_online !== privates_prev.all_devices_online)) {
+        let obj_name = 'all_devices_online';
+        adapter.getObject(obj_name, function(err, obj) { 
+            if (!obj) {
+                adapter.setObject(obj_name, {
+                type: 'state',
+                common: {
+                    name: 'all devices online',
+                    role: 'indicator',
+                    type: 'boolean',
+                    read: true,
+                    write: false,
+                },
+                native: {}
+                });
+            }
+        });
+        adapter.setState(obj_name, privates.all_devices_online, true);
+    }
+
     for(let h = 0; h < privates.households.length; h++) {
         let prefix = privates.households[h].name + '.devices';
        
@@ -451,6 +472,11 @@ function get_control(callback) {
         privates.devices = obj.data.devices;
         privates.households = obj.data.households;
         privates.pets = obj.data.pets;
+
+        privates.all_devices_online = true;
+        for (let d = 0; d < privates.devices.length; d++) {
+            privates.all_devices_online = privates.all_devices_online && privates.devices[d].status.online;
+        }
 
         set_status();
 
