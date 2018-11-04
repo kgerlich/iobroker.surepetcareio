@@ -246,7 +246,7 @@ function set_pets() {
                 adapter.setObject(prefix, {
                     type: 'channel',
                     common: {
-                        name: 'Pets in household ' + privates.pets[i].household_id,
+                        name: 'Pets in household ' + household_name + ' (' + privates.pets[i].household_id + ')',
                         role: 'info'
                     },
                     native: {}
@@ -324,7 +324,7 @@ function set_status() {
                 adapter.setObject(prefix, {
                     type: 'channel',
                     common: {
-                        name: 'Devices in household ' + privates.households[h].name + '(' + privates.households[h].id + ')',
+                        name: 'Devices in household ' + privates.households[h].name + ' (' + privates.households[h].id + ')',
                         role: 'info'
                     },
                     native: {}
