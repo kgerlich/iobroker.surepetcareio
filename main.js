@@ -165,7 +165,7 @@ function do_request(tag, options, postData, callback) {
         res.on('data', (chunk) => {
             data.push(chunk);
         });
-        res.on('data', () => {
+        res.on('end', () => {
             try {
                 var obj = JSON.parse(data.join(''));
                 adapter.log.debug(util.inspect(obj, false, null, true /* enable colors */));
