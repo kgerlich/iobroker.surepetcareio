@@ -1,6 +1,6 @@
 {
   "name": "iobroker.surepetcareio",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Adapter for Sure Petcare Flap Connect",
   "author": {
     "name": "Klaus Gerlicher",

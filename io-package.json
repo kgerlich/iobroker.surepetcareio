@@ -1,11 +1,15 @@
 {
     "common": {
         "name": "surepetcareio",
-        "version": "0.0.1",
+        "version": "1.0.0",
         "news": {
             "0.0.1": {
                 "en": "initial adapter",
                 "de": "Initiale Version"
+            },
+            "1.0.0": {
+                "en": "release V1.0.0",
+                "de": "Freigabe V1.0.0"
             }
         },
 		"title": "Sure Petcare Flap Connect",
