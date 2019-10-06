@@ -355,30 +355,103 @@ function set_status() {
        
         for(let d = 0; d < privates.devices.length; d++) {
             if (privates.devices[d].household_id ==  privates.households[h].id) {
-
                 if ('parent' in privates.devices[d]) {
-                    // locking status
-                    let locking_mode_changed = false;
-                    if (!privates_prev.devices || (privates.devices[d].status.locking.mode !== privates_prev.devices[d].status.locking.mode)) {
-                        let obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'locking';
-                        adapter.getObject(obj_name, function(err, obj) { 
-                            if (!obj) {
-                                adapter.setObject(obj_name, {
-                                    type: 'state',
-                                    common: {
-                                        name: 'locking',
-                                        role: 'indicator',
-                                        type: 'number',
-                                        read: true,
-                                        write: false,
-                                        states: {0: 'OPEN', 1:'LOCKED INSIDE', 2:'LOCKED OUTSIDE', 3:'LOCKED BOTH', 4:'CURFEW' }
-                                    },
-                                    native: {}
-                                });
+                    
+                    // Sureflap Connect
+                    if (privates.devices[d].product_id == 3) {
+                        // locking status
+                        let locking_mode_changed = false;
+                        if (!privates_prev.devices || (privates.devices[d].status.locking.mode !== privates_prev.devices[d].status.locking.mode)) {
+                            let obj_name =  prefix + '.' + privates.devices[d].name + '.' + 'locking';
+                            adapter.getObject(obj_name, function(err, obj) { 
+                                if (!obj) {
+                                    adapter.setObject(obj_name, {
+                                        type: 'state',
+                                        common: {
+                                            name: 'locking',
+                                            role: 'indicator',
+                                            type: 'number',
+                                            read: true,
+                                            write: false,
+                                            states: {0: 'OPEN', 1:'LOCKED INSIDE', 2:'LOCKED OUTSIDE', 3:'LOCKED BOTH', 4:'CURFEW' }
+                                        },
+                                        native: {}
+                                    });
+                                }
+                            });
+                            try {
+                                adapter.setState(obj_name, privates.devices[d].status.locking.mode, true);
+                                locking_mode_changed = true;
+                            } catch(e) {
+
                             }
-                        });
-                        adapter.setState(obj_name, privates.devices[d].status.locking.mode, true);
-                        locking_mode_changed = true;
+                        }
+
+                        // lock control
+                        if (locking_mode_changed) {
+                            let control_name = 'lockinside';
+                            let obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
+                            adapter.getObject(obj_name, function(err, obj) { 
+                                if (!obj) {
+                                    adapter.setObject(obj_name, {
+                                        type: 'state',
+                                        common: {
+                                            name: control_name,
+                                            role: 'switch',
+                                            type: 'boolean',
+                                            read: true,
+                                            write: true,
+                                        },
+                                        native: {}
+                                    });
+                                }
+                            });
+                            adapter.setState(obj_name, privates.devices[d].status.locking.mode === 1, true);
+                        }
+
+                        if (locking_mode_changed) {
+                            let control_name = 'lockoutside';
+                            let obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
+                            adapter.getObject(obj_name, function(err, obj) { 
+                                if (!obj) {
+                                    adapter.setObject(obj_name, {
+                                        type: 'state',
+                                        common: {
+                                            name: control_name,
+                                            role: 'switch',
+                                            type: 'boolean',
+                                            read: true,
+                                            write: true,
+                                        },
+                                        native: {}
+                                    });
+                                }
+                            });
+                            adapter.setState(obj_name, privates.devices[d].status.locking.mode === 2, true);
+                        }
+
+                        if (locking_mode_changed) {
+                            let control_name = 'lockboth';
+                            let obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
+                            adapter.getObject(obj_name, function(err, obj) { 
+                                if (!obj) {
+                                    adapter.setObject(obj_name, {
+                                        type: 'state',
+                                        common: {
+                                            name: control_name,
+                                            role: 'switch',
+                                            type: 'boolean',
+                                            read: true,
+                                            write: true,
+                                        },
+                                        native: {}
+                                    });
+                                }
+                            });
+                            adapter.setState(obj_name, privates.devices[d].status.locking.mode === 3, true);
+                        }
+                    } else if (privates.devices[d].product_id == 4) {
+                        // feeding bowl connect
                     }
 
                     // battery status
@@ -423,69 +496,6 @@ function set_status() {
                     }
 
 
-                    // lock control
-                    if (locking_mode_changed) {
-                        let control_name = 'lockinside';
-                        let obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
-                        adapter.getObject(obj_name, function(err, obj) { 
-                            if (!obj) {
-                                adapter.setObject(obj_name, {
-                                    type: 'state',
-                                    common: {
-                                        name: control_name,
-                                        role: 'switch',
-                                        type: 'boolean',
-                                        read: true,
-                                        write: true,
-                                    },
-                                    native: {}
-                                });
-                            }
-                        });
-                        adapter.setState(obj_name, privates.devices[d].status.locking.mode === 1, true);
-                    }
-
-                    if (locking_mode_changed) {
-                        let control_name = 'lockoutside';
-                        let obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
-                        adapter.getObject(obj_name, function(err, obj) { 
-                            if (!obj) {
-                                adapter.setObject(obj_name, {
-                                    type: 'state',
-                                    common: {
-                                        name: control_name,
-                                        role: 'switch',
-                                        type: 'boolean',
-                                        read: true,
-                                        write: true,
-                                    },
-                                    native: {}
-                                });
-                            }
-                        });
-                        adapter.setState(obj_name, privates.devices[d].status.locking.mode === 2, true);
-                    }
-
-                    if (locking_mode_changed) {
-                        let control_name = 'lockboth';
-                        let obj_name =  prefix + '.' + privates.devices[d].name + '.control.' + control_name;
-                        adapter.getObject(obj_name, function(err, obj) { 
-                            if (!obj) {
-                                adapter.setObject(obj_name, {
-                                    type: 'state',
-                                    common: {
-                                        name: control_name,
-                                        role: 'switch',
-                                        type: 'boolean',
-                                        read: true,
-                                        write: true,
-                                    },
-                                    native: {}
-                                });
-                            }
-                        });
-                        adapter.setState(obj_name, privates.devices[d].status.locking.mode === 3, true);
-                    }
 
                 } else {
                     if (!privates_prev.devices || (privates.devices[d].status.led_mode !== privates_prev.devices[d].status.led_mode)) {
